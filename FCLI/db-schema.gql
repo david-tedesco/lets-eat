@@ -1,0 +1,102 @@
+type UserData @collection(name: "UserData") {
+    NetlifyUserId: String!,
+    Email: String!,
+    FirstName: String!,
+    LastName: String!,
+    DefaultDeliveryAddress: Address!,
+    Orders: [Order],
+    FoodPrint: FoodPrint,
+    FrichtiIdToken: String,
+}
+
+type Address @embedded {
+    Street: String!,
+    City: String!,
+    Zip: String!
+}
+
+type FoodPrint @collection(name: "FoodPrint") {
+    AssociatedUser: UserData!,
+    Likes: [FoodTrait]! @relation(name: "FoodPrintsLikes_FoodTrait"),
+    Dislikes: [FoodTrait]! @relation(name: "FoodPrintsDislikes_FoodTrait"),
+    Allergies: [FoodTrait]! @relation(name: "FoodPrintsAllergies_FoodTrait")
+}
+
+type FoodTrait @collection(name: "FoodTrait") {
+    Type: FoodTraitType!,
+    Value: String!,
+    FoodPrintsLikes: [FoodPrint]! @relation(name: "FoodPrintsLikes_FoodTrait"),
+    FoodPrintsDislikes: [FoodPrint]! @relation(name: "FoodPrintsDislikes_FoodTrait"),
+    FoodPrintsAllergies: [FoodPrint]! @relation(name: "FoodPrintsAllergies_FoodTrait"),
+    ProductsIngredients: [Product]! @relation(name: "ProductsIngredients_FoodTrait"),
+    ProductsNutritionalValues: [Product]! @relation(name: "ProductsNutritionalValues_FoodTrait"),
+    ProductsTags: [Product]! @relation(name: "ProductsTags_FoodTrait"),
+    FeedbackLikedTraits: [Feedback]! @relation(name: "FeedbackLikedTraits_FoodTrait"),
+    FeedbackDislikedTraits: [Feedback]! @relation(name: "FeedbackDislikedTraits_FoodTrait"),
+}
+
+enum FoodTraitType {
+    INGREDIENT,
+    ALLERGEN,
+    COUNTRY,
+    MEALCATEGORY
+}
+
+type Product @collection(name: "Product") {
+    Provider: Provider!,
+    Ingredients: [FoodTrait]! @relation(name: "ProductsIngredients_FoodTrait"),
+    GrossWeight: Float!,
+    Title: String!,
+    Price: Float!,
+    Image: String!,
+    NutritionalValues: [FoodTrait]! @relation(name: "ProductsNutritionalValues_FoodTrait"),
+    Tags: [FoodTrait]! @relation(name: "ProductsTags_FoodTrait"),
+    Availability: ProductAvailability!,
+    Carts: [Cart]! @relation(name: "Products_Cart"),
+}
+
+enum ProductAvailability {
+    IN_STOCK,
+    OUT_OF_STOCK,
+    DISCONTINUED
+}
+
+enum Provider {
+    FRICHTI
+}
+
+type Order @collection(name: "Order") {
+    User: UserData!,
+    FrichtiUser: String!,
+    FrichtiOrderId: String!,
+    DeliveryAddress: Address!,
+    Cart: Cart!,
+    OrderStatus: OrderStatus!,
+    OrderDate: Date!
+}
+
+type Cart @collection(name: "Cart") {
+    Order: Order!,
+    Products: [Product]! @relation(name: "Products_Cart"),
+    TotalPrice: Float!,
+    Status: CartStatus!
+}
+
+enum OrderStatus {
+    PENDING,
+    CONFIRMED,
+    CANCELLED
+}
+
+enum CartStatus {
+    OPEN,
+    CLOSED
+}
+
+type Feedback @collection(name: "Feedback") {
+    User: UserData!,
+    Order: Order!,
+    LikedTraits: [FoodTrait]! @relation(name: "FeedbackLikedTraits_FoodTrait"),
+    DislikedTraits: [FoodTrait]! @relation(name: "FeedbackDislikedTraits_FoodTrait"),
+    Rating: Int!
+}

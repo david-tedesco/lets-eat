@@ -1,0 +1,354 @@
+CreateFunction({
+    name: "CreateProduct",
+    body: Query(
+        Lambda(["Provider", "Ingredients", "GrossWeight", "Title", "Price", "Image", "NutritionalValues", "Tags"],
+            If(
+                Call("ProductExists", Var("Title")),
+                Call("GetProduct", Var("Title")),
+                Create("Product", {
+                    data: {
+                        Provider: Var("Provider"),
+                        Ingredients: Var("Ingredients"),
+                        GrossWeight: Var("GrossWeight"),
+                        Title: Var("Title"),
+                        Price: Var("Price"),
+                        Image: Var("Image"),
+                        NutritionalValues: Var("NutritionalValues"),
+                        Tags: Var("Tags"),
+                        Availability: 0
+                    }
+                })
+            )
+        )
+    )
+})
+
+CreateFunction({
+    name: "CreateProductFromObject",
+    body: Query(
+        Lambda(["Product"],
+            If(
+                Call("ProductExists", Select("Title", Var("Product"))),
+                Call("GetProduct", Select("Title", Var("Product"))),
+                Create("Product", {
+                    data: {
+                        Provider: Select("Provider", Var("Product")),
+                        Ingredients: Select("Ingredients", Var("Product")),
+                        GrossWeight: Select("GrossWeight", Var("Product")),
+                        Title: Select("Title", Var("Product")),
+                        Price: Select("Price", Var("Product")),
+                        Image: Select("Image", Var("Product")),
+                        NutritionalValues: Select("NutritionalValues", Var("Product")),
+                        Tags: Select("Tags", Var("Product")),
+                        Availability: 0
+                    }
+                })
+            )
+        )
+    )
+})
+
+CreateFunction({
+    name: "CreateProductBulk",
+    body: Query(
+        Lambda("Products",
+            Foreach(Var("Products"),
+                Lambda("Product",
+                    Call("CreateProductFromObject", Var("Product"))
+                )
+            )
+        )
+    )
+})
+
+CreateFunction({
+    name: "UpdateProduct",
+    body: Query(
+        Lambda(["Id", "Title", "Provider", "Ingredients", "GrossWeight", "Price", "Image", "NutritionalValues", "Tags", "Availability"],
+            Update(Ref(Collection("Product"), Var("Id")), {
+                data: {
+                    Provider: Var("Provider"),
+                    Ingredients: Var("Ingredients"),
+                    GrossWeight: Var("GrossWeight"),
+                    Title: Var("Title"),
+                    Price: Var("Price"),
+                    Image: Var("Image"),
+                    NutritionalValues: Var("NutritionalValues"),
+                    Tags: Var("Tags"),
+                    Availability: Var("Availability")
+                }
+            })
+        )
+    )
+})
+
+CreateFunction({
+    name: "DeleteProduct",
+    body: Query(
+        Lambda(["Id"],
+            Delete(Ref(Collection("Product"), Var("Id")))
+        )
+    )
+})
+
+CreateFunction({
+    name: "ProductExists",
+    body: Query(
+        Lambda(["Title"],
+        If(
+            Exists(
+                Match(Index("Product_by_title"), Var("Title"))
+            ),
+            true,
+            false
+        )
+    ))
+})
+
+CreateFunction({
+    name: "GetProductById",
+    body: Query(
+            Lambda(["Id"],
+            Let({
+                p: Select("data", Get(Ref(Collection("Product"), Var("Id"))))
+            },
+            Let({
+                ingredients: Map(Select("Ingredients", Var("p")), Lambda("X", Get(Var("X")))),
+                nutri: Map(Select("NutritionalValues", Var("p")), Lambda("X", Get(Var("X")))),
+                tags: Map(Select("Tags", Var("p")), Lambda("X", Get(Var("X"))))
+            },
+            {
+                Provider: Select("Provider", Var("p")),
+                Ingredients: Var("ingredients"),
+                GrossWeight: Select("GrossWeight", Var("p")),
+                Title: Select("Title", Var("p")),
+                Price: Select("Price", Var("p")),
+                Image: Select("Image", Var("p")),
+                NutritionalValues: Var("nutri"),
+                Tags: Var("tags"),
+                Availability: Select("Availability", Var("p"))
+            }
+            )
+            )
+            ))
+})
+
+
+CreateFunction({
+    name: "GetProductByTitle",
+    body: Query(
+        Lambda(["Title"],
+                Select("data", Get(
+                    Match(Index("Product_by_title"), Var("Title"))
+                ))
+        )
+    )
+})
+
+CreateFunction({
+    name: "FoodTraitExists",
+    body: Query(
+        Lambda(["Type", "Value"],
+        If(
+            Exists(
+                Match(Index("FoodTrait_by_type_and_value"), Var("Type"), Var("Value"))
+            ),
+            true,
+            false
+        )
+    ))
+})
+
+CreateFunction({
+    name: "GetOrCreateFoodTrait",
+    body: Query(
+        Lambda(["Type", "Value"],
+            If(
+                Call("FoodTraitExists", Var("Type"), Var("Value")),
+                Get(
+                    Match(Index("FoodTrait_by_type_and_value"), Var("Type"), Var("Value"))
+                ),
+                Call("CreateFoodTrait", Var("Type"), Var("Value"))
+            )
+        )
+    )
+})
+
+CreateFunction({
+    name: 'CreateFoodTrait',
+    body: Query(
+        Lambda(["Type", "Value"],
+            Create("FoodTrait", {
+                data: {
+                    Type: Var("Type"),
+                    Value: Var("Value"),
+                    FoodPrintsLikes: [],
+                    FoodPrintsDislikes: [],
+                    FoodPrintsAllergies: [],
+                    ProductsIngredients: [],
+                    ProductsNutritionalValues: [],
+                    ProductsTags: []
+                }
+            })
+        )
+    )
+});
+
+CreateFunction({
+    name: 'CreateTestFoodPrint',
+    role: "admin",
+    body: Query(
+        Lambda(["AssociatedUser", "Likes", "Dislikes", "Allergies"],
+            Create("FoodPrint", {
+                data: {
+                    AssociatedUser: Var("AssociatedUser"),
+                    Likes: Var("Likes"),
+                    Dislikes: Var("Dislikes"),
+                    Allergies: Var("Allergies"),
+                }
+            })
+        )
+    )
+});
+
+CreateFunction({
+    name: 'CreateTestProduct',
+    role: "admin",
+    body: Query(
+        Lambda(["Title", "Ingredients", "NutritionalValues", "Tags"],
+            Create("Product", {
+                data: {
+                    Provider: 0,
+                    Ingredients: Var("Ingredients"),
+                    GrossWeight: 100,
+                    Title: Var("Title"),
+                    Price: 10.99,
+                    Image: "",
+                    NutritionalValues: Var("NutritionalValues"),
+                    Tags: Var("Tags"),
+                    Availability: 0
+                }
+            })
+        )
+    )
+});
+
+CreateFunction({
+    name: "CreateTestUserData",
+    role: "admin",
+    body: Query(
+        Lambda(["Email", "FirstName", "LastName", "DefaultDeliveryAddress"],
+            Create("UserData", {
+                data: {
+                    NetlifyUserId: "",
+                    Email: Var("Email"),
+                    FirstName: Var("FirstName"),
+                    LastName: Var("LastName"),
+                    DefaultDeliveryAddress: Var("DefaultDeliveryAddress"),
+                    Orders: []
+                }
+            })
+        )
+    )
+})
+
+Let({
+    Brocoli: Select('ref', Call('CreateFoodTrait', 0, "Brocoli")),
+    Chocolat: Select('ref', Call('CreateFoodTrait', 0, "Chocolat")),
+    Vanille: Select('ref', Call('CreateFoodTrait', 0, "Vanille")),
+    Lait: Select('ref', Call('CreateFoodTrait', 0, "Lait")),
+    Fromage: Select('ref', Call('CreateFoodTrait', 0, "Fromage")),
+    Fenouil: Select('ref', Call('CreateFoodTrait', 0, "Fenouil")),
+    Poivre: Select('ref', Call('CreateFoodTrait', 0, "Poivre")),    
+    Sucre: Select('ref', Call('CreateFoodTrait', 0, "Sucre")),
+    Oeuf: Select('ref', Call('CreateFoodTrait', 0, "Oeuf")),
+    Pomme: Select('ref', Call('CreateFoodTrait', 0, "Pomme")),
+    Pommedeterre: Select('ref', Call('CreateFoodTrait', 0, "Pomme de terre")),
+    EscalopePoulet: Select('ref', Call('CreateFoodTrait', 0, "Escalope de poulet")),
+
+    Gluten: Select('ref', Call('CreateFoodTrait', 1, "Gluten")),
+    Arachides: Select('ref', Call('CreateFoodTrait', 1, "Arachides")),
+    Crustaces: Select('ref', Call('CreateFoodTrait', 1, "Crustacés")),
+    Poisson: Select('ref', Call('CreateFoodTrait', 1, "Poisson")),
+    OeufsAllergen: Select('ref', Call('CreateFoodTrait', 1, "Oeufs")),
+    Lupin: Select('ref', Call('CreateFoodTrait', 1, "Lupin")),
+    Mollusques: Select('ref', Call('CreateFoodTrait', 1, "Mollusques")), 
+
+    Italie: Select('ref', Call('CreateFoodTrait', 2, "Italie")),
+    France: Select('ref', Call('CreateFoodTrait', 2, "France")),
+    PaysBas: Select('ref', Call('CreateFoodTrait', 2, "Pays-Bas")),
+    Belgique: Select('ref', Call('CreateFoodTrait', 2, "Belgique")),
+    Suisse: Select('ref', Call('CreateFoodTrait', 2, "Suisse")),
+    Allemagne: Select('ref', Call('CreateFoodTrait', 2, "Allemagne")),
+    Espagne: Select('ref', Call('CreateFoodTrait', 2, "Espagne")),
+    Portugal: Select('ref', Call('CreateFoodTrait', 2, "Portugal")),
+    EtatsUnis: Select('ref', Call('CreateFoodTrait', 2, "Etats-Unis")),
+    Canada: Select('ref', Call('CreateFoodTrait', 2, "Canada")),
+
+    Pizza: Select('ref', Call('CreateFoodTrait', 3, "Pizza")),
+    Patisserie: Select('ref', Call('CreateFoodTrait', 3, "Pâtisserie")),
+    Pates: Select('ref', Call('CreateFoodTrait', 3, "Pâtes")),
+    Quiche: Select('ref', Call('CreateFoodTrait', 3, "Quiche")),
+    PlatEnSauce: Select('ref', Call('CreateFoodTrait', 3, "Plat en sauce")),
+    Salade: Select('ref', Call('CreateFoodTrait', 3, "Salade")),
+    Sandwich: Select('ref', Call('CreateFoodTrait', 3, "Sandwich")),
+    Soupe: Select('ref', Call('CreateFoodTrait', 3, "Soupe")),
+    Tartare: Select('ref', Call('CreateFoodTrait', 3, "Tartare")),
+    Tarte: Select('ref', Call('CreateFoodTrait', 3, "Tarte")),
+    Tartiflette: Select('ref', Call('CreateFoodTrait', 3, "Tartiflette")),
+    Tortilla: Select('ref', Call('CreateFoodTrait', 3, "Tortilla")),
+
+    UserData1: Select('ref', Call('CreateTestUserData', "test1@test.com", "Test", "User", "1 rue de la paix, 75000 Paris")),
+    UserData2: Select('ref', Call('CreateTestUserData', "test2@test.com", "Test2", "User", "2 rue de la paix, 75000 Paris")),
+    UserData3: Select('ref', Call('CreateTestUserData', "test3@test.com", "Test3", "User", "3 rue de la paix, 75000 Paris")),
+},
+    Do(
+        Call('CreateTestFoodPrint', Var("UserData1"), [Var("Lait"), Var("Fenouil"), Var("Poivre")], [Var("Gluten"), Var("Arachides"), Var("Crustaces")], [Var("Mollusques")]),
+        Call('CreateTestFoodPrint', Var("UserData2"), [Var("Brocoli"), Var("Chocolat"), Var("Vanille")], [Var("Pizza"), Var("Patisserie"), Var("Pates")], [Var("Gluten"), Var("Arachides"), Var("Crustaces")]),
+        Call('CreateTestFoodPrint', Var("UserData3"), [Var("France"), Var("Patisserie"), Var("Soupe")], [Var("EtatsUnis"), Var("Sandwich"), Var("Pates")], [Var("Lupin")]),
+        Call('CreateTestProduct', "Pizza Margherita", [Var("Oeuf")], [], [Var("Italie"), Var("Gluten"), Var("Pizza")]),
+        Call('CreateTestProduct', "Pizza 4 fromages", [Var("Oeuf"), Var("Fromage")], [], [Var("Italie"), Var("Gluten"), Var("Pizza")]),
+        Call('CreateTestProduct', "Salade caesar", [Var("Oeuf"), Var("EscalopePoulet")], [], [Var("France"), Var("Gluten"), Var("Salade")])
+    )
+);
+
+CreateIndex({
+    name: 'FoodTraits',
+    source: Collection('FoodTrait'),
+})
+CreateIndex({
+    name: 'FoodPrints',
+    source: Collection('FoodPrint'),
+})
+CreateIndex({
+    name: 'Products',
+    source: Collection('Product'),
+})
+CreateIndex({
+    name: 'Users',
+    source: Collection('UserData'),
+})
+CreateIndex({
+    name: 'Product_by_title',
+    source: Collection('Product'),
+    terms: [
+        {
+            field: ['data', 'Title'],
+            binding: "Title"
+        }
+    ]
+})
+CreateIndex({
+    name: 'FoodTrait_by_type_and_value',
+    source: Collection('FoodTrait'),
+    terms: [
+        {
+            field: ['data', 'Type'],
+            binding: "Type"
+        },
+        {
+            field: ['data', 'Value'],
+            binding: "Value"
+        }
+    ]
+})

@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "37940974427",
+    "project_id": "let-s-eat-b7443",
+    "storage_bucket": "let-s-eat-b7443.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:37940974427:android:cc1663112cade53317807e",
+        "android_client_info": {
+          "package_name": "com.example.lets_eat"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "37940974427-ik9ba70sgcolg91r81m8jfcu1sjanfg1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDo9RluAr_-oOf3OIhQH1kgZ4851yx_0bQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "37940974427-ik9ba70sgcolg91r81m8jfcu1sjanfg1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

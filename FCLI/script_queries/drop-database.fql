@@ -1,0 +1,2 @@
+Map(Paginate(Collections()), Lambda(['ref'], Delete(Var('ref'))));
+Map(Paginate(Functions()), Lambda(['ref'], Delete(Var('ref'))));

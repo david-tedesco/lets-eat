@@ -1,0 +1,64 @@
+name: Publish
+
+on:
+  pull_request:
+   branches: [ CICD.1 ]
+
+jobs:
+
+  publish:
+    if: github.event.review.state == 'approved'
+    runs-on: ubuntu-latest
+
+    steps:
+    
+    - name: Checkout the code
+      uses: actions/checkout@v2
+
+    - name: Install and set Flutter version
+      uses: subosito/flutter-action@v1.4.0
+      with:
+        flutter-version: '2.0.1'
+          
+    - name: Restore packages
+      run: flutter pub get
+        
+    - name: Analyze
+      run: flutter analyze
+
+    - name: Run tests
+      run: flutter test --coverage
+
+    - uses: actions/checkout@master
+
+    #- name: Publish
+    #  uses: netlify/actions/build@master
+     # env:
+      #  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+       # NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        #NETLIFY_BASE: lets_eat
+        #NETLIFY_CMD: export CI=false;if cd flutter; then git pull && cd ..; else git clone https://github.com/flutter/flutter.git; fi && flutter/bin/flutter config --enable-web && flutter/bin/flutter build web --release
+        #NETLIFY_DIR: lets_eat/build/web
+
+    - name: Send mail
+      uses: dawidd6/action-send-mail@v3
+      with:
+        # Required mail server address:
+        server_address: smtp.office365.com
+    # Required mail server port:
+        server_port: 587
+    # Optional (recommended): mail server username:
+        username: ${{secrets.EMAIL_PASSWORD}}
+    # Optional (recommended) mail server password:
+        password: ${{secrets.EMAIL_USERNAME}}
+    # Required mail subject:
+        subject: Tests results
+    # Required recipients' addresses:
+        to: manar.benkraouda@epitech.eu,arthur.guerquin@epitech.eu
+    # Required sender full name (address can be skipped):
+        from: Lets eat Github Actions
+    # Optional whether this connection use TLS (default is true if server_port is 465)
+        secure: true
+    # Optional plain body:
+        body: Build job of ${{github.repository}} completed successfully! New version has been published ! 
+        attachement: file:./coverage/lcov-${{ GITHUB_REF }}-${{ GITHUB_SHA }}.info.html

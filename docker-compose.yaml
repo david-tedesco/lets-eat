@@ -1,0 +1,27 @@
+version: "3"
+
+services:
+
+    front:
+      container_name: letEat-front
+      build: ./FCLI
+      volumes:
+        - apk-build:/usr/apk
+
+    backend:
+      build: ./LetsEat.API
+      container_name: "backend"
+      restart: unless-stopped
+      expose: 
+        - 44300
+      networks:
+        - db_tier
+      environment:
+        - LETSEAT_APK=/usr/apk/letsEat.apk
+volumes:
+  apk-build:
+
+networks:
+  db_tier:
+    driver: bridge
+  
